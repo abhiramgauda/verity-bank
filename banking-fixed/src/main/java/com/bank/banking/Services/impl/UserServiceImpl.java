@@ -107,6 +107,39 @@ public class UserServiceImpl {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(rollbackOn = Exception.class)
+    public Integer promoteToAdmin(Integer userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("No user found with the ID for promotion:: " + userId));
+        var adminRole = getOrCreateAdminRole();
+        var roles = new java.util.ArrayList<>(user.getRoles() == null ? List.of() : user.getRoles());
+        boolean alreadyAdmin = roles.stream().anyMatch(r -> r.getName().equals(RoleType.ROLE_ADMIN.name()));
+        if (!alreadyAdmin) {
+            roles.add(adminRole);
+            user.setRoles(roles);
+            userRepository.save(user);
+        }
+        return user.getId();
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public Integer demoteFromAdmin(Integer userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("No user found with the ID for demotion:: " + userId));
+        var roles = new java.util.ArrayList<>(user.getRoles() == null ? List.of() : user.getRoles());
+        roles.removeIf(r -> r.getName().equals(RoleType.ROLE_ADMIN.name()));
+        user.setRoles(roles);
+        userRepository.save(user);
+        return user.getId();
+    }
+
+    private Role getOrCreateAdminRole() {
+        return roleRepository.findByName(RoleType.ROLE_ADMIN.name())
+                .orElseGet(() -> roleRepository.save(
+                        Role.builder().name(RoleType.ROLE_ADMIN.name()).build()
+                ));
+    }
+
     private Role getOrCreateDefaultUserRole() {
         return roleRepository.findByName(RoleType.ROLE_USER.name())
                 .orElseGet(() -> roleRepository.save(

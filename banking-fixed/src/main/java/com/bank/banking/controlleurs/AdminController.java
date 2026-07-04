@@ -6,11 +6,10 @@ import com.bank.banking.dto.Userdto;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,5 +31,21 @@ public class AdminController {
     @GetMapping("/users/active")
     public ResponseEntity<List<Userdto>> findAllActiveUsers() {
         return ResponseEntity.ok(service.findAllUsersByState(true));
+    }
+
+    @PatchMapping("/users/{user-id}/promote")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Integer promote(
+            @PathVariable("user-id") Integer id
+    ) {
+        return service.promoteToAdmin(id);
+    }
+
+    @PatchMapping("/users/{user-id}/demote")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Integer demote(
+            @PathVariable("user-id") Integer id
+    ) {
+        return service.demoteFromAdmin(id);
     }
 }
