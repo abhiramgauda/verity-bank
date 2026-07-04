@@ -4,7 +4,7 @@ import { useToast } from '../ToastContext.jsx';
 import { api } from '../api.js';
 import { Banner, Empty, PageHead, Spinner } from '../components/Common.jsx';
 
-function UserList({ users, isActive, onToggle }) {
+function UserList({ users, isActive, onToggle, onPromote }) {
   if (!users.length) {
     return (
       <div className="ledger">
@@ -20,9 +20,12 @@ function UserList({ users, isActive, onToggle }) {
             <div className="primary">{u.firstname} {u.lastname}</div>
             <div className="secondary">{u.email} · #{u.id}</div>
           </div>
-          <button className={`btn btn-sm ${isActive ? 'btn-danger-ghost' : 'btn-gold'}`} onClick={() => onToggle(u.id, isActive)}>
-            {isActive ? 'Deactivate' : 'Activate'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => onPromote(u.id)}>Make Admin</button>
+            <button className={`btn btn-sm ${isActive ? 'btn-danger-ghost' : 'btn-gold'}`} onClick={() => onToggle(u.id, isActive)}>
+              {isActive ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -63,6 +66,17 @@ export default function Admin() {
     }
   }
 
+  async function promote(id) {
+    if (!confirm('Grant this user admin privileges?')) return;
+    try {
+      await api(`/admin/users/${id}/promote`, { method: 'PATCH' }, token);
+      toast('User promoted to admin.', 'success');
+      load();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  }
+
   return (
     <>
       <PageHead eyebrow="Back Office" title="Admin" sub="Manage customer activation status. Requires an admin role." />
@@ -82,7 +96,7 @@ export default function Admin() {
           ) : activeErr ? (
             <Banner type="error">{activeErr}</Banner>
           ) : (
-            <UserList users={active} isActive onToggle={toggle} />
+            <UserList users={active} isActive onToggle={toggle} onPromote={promote} />
           )}
         </div>
         <div className="section">
@@ -96,7 +110,7 @@ export default function Admin() {
           ) : inactiveErr ? (
             <Banner type="error">{inactiveErr}</Banner>
           ) : (
-            <UserList users={inactive} isActive={false} onToggle={toggle} />
+            <UserList users={inactive} isActive={false} onToggle={toggle} onPromote={promote} />
           )}
         </div>
       </div>
